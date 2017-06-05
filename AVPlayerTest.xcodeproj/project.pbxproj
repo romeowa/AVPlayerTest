@@ -113,7 +113,7 @@
 				TargetAttributes = {
 					45FF44AC1EDBB80100EFFB23 = {
 						CreatedOnToolsVersion = 8.3.2;
-						DevelopmentTeam = WJVWC5K27R;
+						DevelopmentTeam = 76222M8V56;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -279,7 +279,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				DEVELOPMENT_TEAM = WJVWC5K27R;
+				DEVELOPMENT_TEAM = 76222M8V56;
 				INFOPLIST_FILE = AVPlayerTest/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.home.AVPlayerTest;
@@ -291,7 +291,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				DEVELOPMENT_TEAM = WJVWC5K27R;
+				DEVELOPMENT_TEAM = 76222M8V56;
 				INFOPLIST_FILE = AVPlayerTest/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.home.AVPlayerTest;
@@ -318,6 +318,7 @@
 				45FF44C91EDBB80100EFFB23 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 

@@ -11,6 +11,7 @@
 @interface ViewController : UIViewController
 
 @property (weak, nonatomic) IBOutlet UISlider *uiSlider;
+@property (weak, nonatomic) IBOutlet UIView *progressVIew;
 
 @end
 

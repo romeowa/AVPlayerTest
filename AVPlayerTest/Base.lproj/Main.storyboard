@@ -22,29 +22,28 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="soL-CP-Dg8">
-                                <rect key="frame" x="20" y="50" width="335" height="30"/>
-                                <color key="backgroundColor" red="1" green="0.56912513618073901" blue="0.56949084152092033" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                <state key="normal" title="download start!"/>
-                                <connections>
-                                    <action selector="click:" destination="BYZ-38-t0r" eventType="touchUpInside" id="gv0-MW-y4K"/>
-                                </connections>
-                            </button>
                             <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="VuD-Ji-N99">
-                                <rect key="frame" x="14" y="90" width="347" height="31"/>
+                                <rect key="frame" x="14" y="30" width="347" height="31"/>
                             </slider>
+                            <view contentMode="scaleToFill" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="aDC-ru-ZLe">
+                                <rect key="frame" x="16" y="90" width="0.0" height="10"/>
+                                <color key="backgroundColor" red="1" green="0.14191840659999999" blue="0.20818326770000001" alpha="1" colorSpace="calibratedRGB"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" id="6ar-9t-9YS"/>
+                                    <constraint firstAttribute="height" constant="10" id="O1H-Yw-8oY"/>
+                                </constraints>
+                            </view>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
-                            <constraint firstItem="VuD-Ji-N99" firstAttribute="top" secondItem="soL-CP-Dg8" secondAttribute="bottom" constant="10" id="2rD-F3-C6h"/>
-                            <constraint firstAttribute="trailing" secondItem="soL-CP-Dg8" secondAttribute="trailing" constant="20" id="8sy-gC-Cp2"/>
-                            <constraint firstItem="soL-CP-Dg8" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" constant="30" id="Hbd-rj-he6"/>
+                            <constraint firstItem="aDC-ru-ZLe" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" id="DmC-1b-VHM"/>
+                            <constraint firstItem="VuD-Ji-N99" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" constant="10" id="WJX-Go-2W4"/>
                             <constraint firstItem="VuD-Ji-N99" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" id="cao-Is-6Fa"/>
-                            <constraint firstItem="soL-CP-Dg8" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leading" constant="20" id="egC-FE-fT2"/>
                             <constraint firstAttribute="trailingMargin" secondItem="VuD-Ji-N99" secondAttribute="trailing" id="uRO-I7-wzV"/>
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="progressVIew" destination="aDC-ru-ZLe" id="MgY-h4-wg4"/>
                         <outlet property="uiSlider" destination="VuD-Ji-N99" id="gnN-Ob-OoI"/>
                     </connections>
                 </viewController>

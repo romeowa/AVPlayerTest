@@ -30,14 +30,17 @@ static void *playerContext = &playerContext;
     NSURL *_originalURL;
 }
 
-- (IBAction)click:(id)sender {
-//http://cdn.mos.musicradar.com/audio/samples/abstract-demo-loops/LFC130-02.mp3
-//https://allthingsaudio.wikispaces.com/file/view/Shuffle%20for%20K.M.mp3/139190697/Shuffle%20for%20K.M.mp3
-//http://www.nimh.nih.gov/audio/neurogenesis.mp3
 
-    _originalURL = [NSURL URLWithString:@"https://allthingsaudio.wikispaces.com/file/view/Shuffle%20for%20K.M.mp3/139190697/Shuffle%20for%20K.M.mp3"];
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+    //http://cdn.mos.musicradar.com/audio/samples/abstract-demo-loops/LFC130-02.mp3
+    //https://allthingsaudio.wikispaces.com/file/view/Shuffle%20for%20K.M.mp3/139190697/Shuffle%20for%20K.M.mp3 // expected length 가 제대로 안나옴
+    //http://www.nimh.nih.gov/audio/neurogenesis.mp3
+    
+    _originalURL = [NSURL URLWithString:@"http://www.nimh.nih.gov/audio/neurogenesis.mp3"];
     AVURLAsset *urlAsset = [AVURLAsset assetWithURL:[self URL:_originalURL withCutsomscheme:@"howard"]];
-
+    
     [urlAsset.resourceLoader setDelegate:self queue:dispatch_get_main_queue()];
     
     self.pendingRequests = [NSMutableArray new];
@@ -53,16 +56,28 @@ static void *playerContext = &playerContext;
     self.player = [AVPlayer playerWithPlayerItem:self.currentPlayerItem];
     
     __weak __typeof(&*self)weakSelf = self;
-    [self.player addPeriodicTimeObserverForInterval:CMTimeMake(1.f, 1.f) queue:nil usingBlock:^(CMTime time) {
-        CMTime duration = [weakSelf.currentPlayerItem duration];
-        NSLog(@"%@",[NSNumber numberWithDouble:CMTimeGetSeconds(duration)]);
+    [self.player addPeriodicTimeObserverForInterval:CMTimeMakeWithSeconds(0.5f, NSEC_PER_SEC)
+                                              queue:NULL
+                                         usingBlock:^(CMTime time) {
+                                             if (CMTIME_IS_VALID(self.currentPlayerItem.duration) == NO ||
+                                                 CMTIME_IS_VALID(time) == NO) {
+                                                     return;
+                                                 }
+                                             
+                                             float total = CMTimeGetSeconds(weakSelf.currentPlayerItem.duration);
+                                             float current = CMTimeGetSeconds(time);
+        
+                                             weakSelf.uiSlider.value =  current/total;
+                                             NSLog(@"time = %f, duration = %f",current,total);
     }];
     
     NSError *error;
     [[AVAudioSession sharedInstance] setActive:YES error:&error];
     [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:&error];
-    
-    [self.player play];
+}
+
+- (IBAction)click:(id)sender {
+    //
 }
 
 
@@ -78,7 +93,7 @@ static void *playerContext = &playerContext;
                 break;
             case AVPlayerItemStatusReadyToPlay:
                 NSLog(@"AVPlayerItemStatusReadyToPlay");
-//                [self.player play];
+                [self.player play];
                 break;
             default:
                 break;
@@ -89,9 +104,10 @@ static void *playerContext = &playerContext;
 - (void)playerItemDidReachEnd:(NSNotification *)notification {
     
 }
+
 #pragma mark - AVAssetResourceLoaderDelegate
 - (BOOL)resourceLoader:(AVAssetResourceLoader *)resourceLoader shouldWaitForLoadingOfRequestedResource:(AVAssetResourceLoadingRequest *)loadingRequest {
-    NSLog(@"shouldWaitForLoadingOfRequestedResource!!!");
+    NSLog(@"shouldWaitForLoadingOfRequestedResource!!! request = %@",loadingRequest);
     if (self.connection == nil) {
         NSURL *interceptedURL = [loadingRequest.request URL];
         NSURLComponents *actualURLComponents = [[NSURLComponents alloc] initWithURL:interceptedURL resolvingAgainstBaseURL:NO];
@@ -104,7 +120,6 @@ static void *playerContext = &playerContext;
 
         
         actualURLComponents.scheme = [[NSURLComponents alloc] initWithURL:_originalURL resolvingAgainstBaseURL:NO].scheme;
-        
         NSURLRequest *request = [NSURLRequest requestWithURL:[actualURLComponents URL]];
         
         self.connection = [[NSURLConnection alloc] initWithRequest:request delegate:self startImmediately:NO];
@@ -119,6 +134,7 @@ static void *playerContext = &playerContext;
 }
 
 - (void)resourceLoader:(AVAssetResourceLoader *)resourceLoader didCancelLoadingRequest:(AVAssetResourceLoadingRequest *)loadingRequest {
+    [loadingRequest finishLoading];
     [self.pendingRequests removeObject:loadingRequest];
 }
 
@@ -132,7 +148,9 @@ static void *playerContext = &playerContext;
 }
 
 - (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data {
-    NSLog(@"didReceiveData data = %lu, total = %lu",[data length],(unsigned long)[self.songData length]);
+    NSLog(@"didReceiveData data = %lu, total = %lu",(unsigned long)[data length],(unsigned long)[self.songData length]);
+    float width = ((float)(self.songData.length + data.length) / (float)self.response.expectedContentLength) * self.view.frame.size.width;
+    [self.progressVIew setFrame:CGRectMake(0, 100, width, 10)];
     
     [self.songData appendData:data];
     [self processPendingRequests];
@@ -179,12 +197,14 @@ static void *playerContext = &playerContext;
         return;
     }
     
-    NSString *mimeType = [self.response MIMEType];
+//    NSString *mimeType = [self.response MIMEType];
 //    CFStringRef contentType = UTTypeCreatePreferredIdentifierForTag(kUTTagClassMIMEType, (__bridge CFStringRef)(mimeType), NULL);
-    
     contentInformationRequest.byteRangeAccessSupported = YES;
+    //제대로 contentType 받도록 수정.
     contentInformationRequest.contentType = @"mp3";
-    contentInformationRequest.contentLength = 5216573;
+    contentInformationRequest.contentLength = self.response.expectedContentLength;
+    
+    NSLog(@"contentLength = %lld, ContentType = %@",contentInformationRequest.contentLength, contentInformationRequest.contentType);
 }
 
 - (BOOL)respondWithDataForRequest:(AVAssetResourceLoadingDataRequest *)dataRequest {
