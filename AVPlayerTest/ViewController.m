@@ -164,6 +164,30 @@ static void *playerContext = &playerContext;
     [self processPendingRequests];
 }
 
+- (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask
+didBecomeDownloadTask:(NSURLSessionDownloadTask *)downloadTask {
+    NSLog(@"000000000000");
+}
+
+- (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask
+ willCacheResponse:(NSCachedURLResponse *)proposedResponse
+ completionHandler:(void (^)(NSCachedURLResponse * _Nullable cachedResponse))completionHandler {
+    NSLog(@"1111111111");
+}
+
+- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task
+didCompleteWithError:(nullable NSError *)error {
+    if(error == nil) {
+        NSLog(@"completed!!!");
+        
+        [self processPendingRequests];
+        
+        NSString *cachedFilePath = [NSTemporaryDirectory() stringByAppendingString:@"test.mp3"];
+        [self.songData writeToFile:cachedFilePath atomically:YES];
+    }
+}
+
+
 
 #pragma mark - private methods
 - (NSURL *)URL:(NSURL *)URL withCutsomscheme:(NSString *)scheme {
