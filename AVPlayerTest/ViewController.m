@@ -13,15 +13,15 @@
 static void *itemContext = &itemContext;
 static void *playerContext = &playerContext;
 
-
-@interface ViewController () <AVAssetResourceLoaderDelegate, NSURLConnectionDataDelegate>
+@interface ViewController () <AVAssetResourceLoaderDelegate, NSURLSessionDataDelegate>
 @property (strong, nonatomic) AVPlayer *player;
 @property (strong, nonatomic) AVPlayerItem *currentPlayerItem;
 
-@property (strong, nonatomic) NSURLConnection *connection;
 @property (strong, nonatomic) NSMutableArray *pendingRequests;
 @property (strong, nonatomic) NSMutableData *songData;
 @property (strong, nonatomic) NSHTTPURLResponse *response;
+
+@property (strong, nonatomic) NSURLSession *session;
 
 
 @end
@@ -74,6 +74,8 @@ static void *playerContext = &playerContext;
     NSError *error;
     [[AVAudioSession sharedInstance] setActive:YES error:&error];
     [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:&error];
+    
+    self.songData = [NSMutableData data];
 }
 
 - (IBAction)click:(id)sender {
@@ -107,8 +109,8 @@ static void *playerContext = &playerContext;
 
 #pragma mark - AVAssetResourceLoaderDelegate
 - (BOOL)resourceLoader:(AVAssetResourceLoader *)resourceLoader shouldWaitForLoadingOfRequestedResource:(AVAssetResourceLoadingRequest *)loadingRequest {
-    NSLog(@"shouldWaitForLoadingOfRequestedResource!!! request = %@",loadingRequest);
-    if (self.connection == nil) {
+    NSLog(@"request = %@",loadingRequest);
+    if (self.session== nil) {
         NSURL *interceptedURL = [loadingRequest.request URL];
         NSURLComponents *actualURLComponents = [[NSURLComponents alloc] initWithURL:interceptedURL resolvingAgainstBaseURL:NO];
         
@@ -122,10 +124,12 @@ static void *playerContext = &playerContext;
         actualURLComponents.scheme = [[NSURLComponents alloc] initWithURL:_originalURL resolvingAgainstBaseURL:NO].scheme;
         NSURLRequest *request = [NSURLRequest requestWithURL:[actualURLComponents URL]];
         
-        self.connection = [[NSURLConnection alloc] initWithRequest:request delegate:self startImmediately:NO];
-        [self.connection setDelegateQueue:[NSOperationQueue mainQueue]];
-        
-        [self.connection start];
+        self.songData = [NSMutableData data];
+        NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
+        self.session = [NSURLSession sessionWithConfiguration:configuration
+                                                     delegate:self
+                                                delegateQueue:[NSOperationQueue mainQueue]];
+        [[self.session dataTaskWithRequest:request] resume];
     }
     
     [self.pendingRequests addObject:loadingRequest];
@@ -134,37 +138,30 @@ static void *playerContext = &playerContext;
 }
 
 - (void)resourceLoader:(AVAssetResourceLoader *)resourceLoader didCancelLoadingRequest:(AVAssetResourceLoadingRequest *)loadingRequest {
+    NSLog(@"cancel request");
     [loadingRequest finishLoading];
     [self.pendingRequests removeObject:loadingRequest];
 }
 
-#pragma mark - NSURLConnectionDataDelegate
-- (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response {
-    NSLog(@"didReceiveResponse >>>");
-    self.songData = [NSMutableData data];
-    self.response = (NSHTTPURLResponse *)response;
+
+#pragma mark - NSURLSessionDataDelegate
+- (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveResponse:(NSURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler {
     
-    [self processPendingRequests];
+    completionHandler(NSURLSessionResponseAllow);
+
+    NSLog(@"didReceiveResponse >>> %@",response);
+
+    self.response = (NSHTTPURLResponse *)response;
 }
 
-- (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data {
+- (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data {
     NSLog(@"didReceiveData data = %lu, total = %lu",(unsigned long)[data length],(unsigned long)[self.songData length]);
+    
+    [self.songData appendData:data];
     float width = ((float)(self.songData.length + data.length) / (float)self.response.expectedContentLength) * self.view.frame.size.width;
     [self.progressVIew setFrame:CGRectMake(0, 100, width, 10)];
     
-    [self.songData appendData:data];
     [self processPendingRequests];
-}
-
-- (void)connectionDidFinishLoading:(NSURLConnection *)connection {
-    NSLog(@"!!!!!!!!!!! finish");
-    [self processPendingRequests];
-    NSString *cachedFilePath = [NSTemporaryDirectory() stringByAppendingString:@"cached.mp3"];
-    [self.songData writeToFile:cachedFilePath atomically:YES];
-}
-
-- (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
-    
 }
 
 
