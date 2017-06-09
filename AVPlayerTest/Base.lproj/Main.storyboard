@@ -24,6 +24,9 @@
                         <subviews>
                             <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="VuD-Ji-N99">
                                 <rect key="frame" x="14" y="30" width="347" height="31"/>
+                                <connections>
+                                    <action selector="sliderValueChanged:" destination="BYZ-38-t0r" eventType="valueChanged" id="nij-R2-Df5"/>
+                                </connections>
                             </slider>
                             <view contentMode="scaleToFill" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="aDC-ru-ZLe">
                                 <rect key="frame" x="16" y="90" width="0.0" height="10"/>
@@ -33,13 +36,24 @@
                                     <constraint firstAttribute="height" constant="10" id="O1H-Yw-8oY"/>
                                 </constraints>
                             </view>
+                            <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="Z4a-3X-fcb">
+                                <rect key="frame" x="26" y="70" width="323" height="30"/>
+                                <color key="backgroundColor" red="0.75677745548822406" green="1" blue="0.97817184592409134" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <state key="normal" title="Clear cache"/>
+                                <connections>
+                                    <action selector="clearCacheButtonClicked:" destination="BYZ-38-t0r" eventType="touchUpInside" id="6EM-OH-tEq"/>
+                                </connections>
+                            </button>
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstItem="aDC-ru-ZLe" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" id="DmC-1b-VHM"/>
+                            <constraint firstItem="Z4a-3X-fcb" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" constant="10" id="FJV-5N-ANM"/>
                             <constraint firstItem="VuD-Ji-N99" firstAttribute="top" secondItem="y3c-jy-aDJ" secondAttribute="bottom" constant="10" id="WJX-Go-2W4"/>
                             <constraint firstItem="VuD-Ji-N99" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" id="cao-Is-6Fa"/>
+                            <constraint firstAttribute="trailingMargin" secondItem="Z4a-3X-fcb" secondAttribute="trailing" constant="10" id="duC-o1-Up5"/>
                             <constraint firstAttribute="trailingMargin" secondItem="VuD-Ji-N99" secondAttribute="trailing" id="uRO-I7-wzV"/>
+                            <constraint firstItem="Z4a-3X-fcb" firstAttribute="top" secondItem="VuD-Ji-N99" secondAttribute="bottom" constant="10" id="ysg-sN-sQR"/>
                         </constraints>
                     </view>
                     <connections>

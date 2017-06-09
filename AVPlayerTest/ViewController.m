@@ -31,13 +31,13 @@ static void *playerContext = &playerContext;
 }
 
 
+#pragma mark - event handlers
 - (void)viewDidLoad {
     [super viewDidLoad];
     
     //http://cdn.mos.musicradar.com/audio/samples/abstract-demo-loops/LFC130-02.mp3
-    //https://allthingsaudio.wikispaces.com/file/view/Shuffle%20for%20K.M.mp3/139190697/Shuffle%20for%20K.M.mp3 // expected length 가 제대로 안나옴
     //http://www.nimh.nih.gov/audio/neurogenesis.mp3
-    
+    //http://www.goclassic.co.kr/mp3/Beethoven_Appasionata_II_&_III.mp3 //교향곡
     _originalURL = [NSURL URLWithString:@"http://www.nimh.nih.gov/audio/neurogenesis.mp3"];
     AVURLAsset *urlAsset = [AVURLAsset assetWithURL:[self URL:_originalURL withCutsomscheme:@"howard"]];
     
@@ -78,10 +78,6 @@ static void *playerContext = &playerContext;
     self.songData = [NSMutableData data];
 }
 
-- (IBAction)click:(id)sender {
-    //
-}
-
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
     if (context == itemContext) {
@@ -107,6 +103,31 @@ static void *playerContext = &playerContext;
     
 }
 
+- (IBAction)sliderValueChanged:(id)sender {
+    UISlider *slider = (UISlider *)sender;
+    if (slider == nil) {
+        return;
+    }
+    
+    if (self.currentPlayerItem == nil ||
+        self.player.status != AVPlayerStatusReadyToPlay ||
+        CMTIME_IS_INVALID(self.currentPlayerItem.duration) == YES ) {
+        return;
+    }
+    
+    double timeToPlay = CMTimeGetSeconds(self.currentPlayerItem.duration);
+    [self.player.currentItem seekToTime:CMTimeMakeWithSeconds(timeToPlay *  slider.value,NSEC_PER_SEC)
+                      completionHandler:^(BOOL finished) {
+                          if (finished == NO)
+                              return;
+                      }];
+}
+
+- (IBAction)clearCacheButtonClicked:(id)sender {
+    [self clearCache];
+}
+
+
 #pragma mark - AVAssetResourceLoaderDelegate
 - (BOOL)resourceLoader:(AVAssetResourceLoader *)resourceLoader shouldWaitForLoadingOfRequestedResource:(AVAssetResourceLoadingRequest *)loadingRequest {
     NSLog(@"request = %@",loadingRequest);
@@ -125,10 +146,11 @@ static void *playerContext = &playerContext;
         NSURLRequest *request = [NSURLRequest requestWithURL:[actualURLComponents URL]];
         
         self.songData = [NSMutableData data];
-        NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
-        self.session = [NSURLSession sessionWithConfiguration:configuration
+        
+        self.session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration]
                                                      delegate:self
                                                 delegateQueue:[NSOperationQueue mainQueue]];
+        
         [[self.session dataTaskWithRequest:request] resume];
     }
     
@@ -146,9 +168,7 @@ static void *playerContext = &playerContext;
 
 #pragma mark - NSURLSessionDataDelegate
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveResponse:(NSURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler {
-    
     completionHandler(NSURLSessionResponseAllow);
-
     NSLog(@"didReceiveResponse >>> %@",response);
 
     self.response = (NSHTTPURLResponse *)response;
@@ -164,18 +184,21 @@ static void *playerContext = &playerContext;
     [self processPendingRequests];
 }
 
-- (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask
+- (void)URLSession:(NSURLSession *)session
+          dataTask:(NSURLSessionDataTask *)dataTask
 didBecomeDownloadTask:(NSURLSessionDownloadTask *)downloadTask {
     NSLog(@"000000000000");
 }
 
-- (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask
+- (void)URLSession:(NSURLSession *)session
+          dataTask:(NSURLSessionDataTask *)dataTask
  willCacheResponse:(NSCachedURLResponse *)proposedResponse
  completionHandler:(void (^)(NSCachedURLResponse * _Nullable cachedResponse))completionHandler {
     NSLog(@"1111111111");
 }
 
-- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task
+- (void)URLSession:(NSURLSession *)session
+              task:(NSURLSessionTask *)task
 didCompleteWithError:(nullable NSError *)error {
     if(error == nil) {
         NSLog(@"completed!!!");
@@ -250,5 +273,11 @@ didCompleteWithError:(nullable NSError *)error {
     return didRespondFully;
 }
 
+- (void)clearCache {
+    NSString *cachedFilePath = [NSTemporaryDirectory() stringByAppendingString:@"test.mp3"];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:cachedFilePath] == YES) {
+        [[NSFileManager defaultManager] removeItemAtPath:cachedFilePath error:nil];
+    }
+}
 
 @end
