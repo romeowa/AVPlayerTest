@@ -61,15 +61,15 @@ static void *playerContext = &playerContext;
                                          usingBlock:^(CMTime time) {
                                              if (CMTIME_IS_VALID(self.currentPlayerItem.duration) == NO ||
                                                  CMTIME_IS_VALID(time) == NO) {
-                                                     return;
-                                                 }
+                                                 return;
+                                             }
                                              
                                              float total = CMTimeGetSeconds(weakSelf.currentPlayerItem.duration);
                                              float current = CMTimeGetSeconds(time);
-        
+                                             
                                              weakSelf.uiSlider.value =  current/total;
                                              NSLog(@"time = %f, duration = %f",current,total);
-    }];
+                                         }];
     
     NSError *error;
     [[AVAudioSession sharedInstance] setActive:YES error:&error];
@@ -103,7 +103,7 @@ static void *playerContext = &playerContext;
     
 }
 
-- (IBAction)sliderValueChanged:(id)sender {
+- (IBAction)valuenChangeEnd:(id)sender {
     UISlider *slider = (UISlider *)sender;
     if (slider == nil) {
         return;
@@ -131,29 +131,39 @@ static void *playerContext = &playerContext;
 #pragma mark - AVAssetResourceLoaderDelegate
 - (BOOL)resourceLoader:(AVAssetResourceLoader *)resourceLoader shouldWaitForLoadingOfRequestedResource:(AVAssetResourceLoadingRequest *)loadingRequest {
     NSLog(@"request = %@",loadingRequest);
+    
     if (self.session== nil) {
-        NSURL *interceptedURL = [loadingRequest.request URL];
-        NSURLComponents *actualURLComponents = [[NSURLComponents alloc] initWithURL:interceptedURL resolvingAgainstBaseURL:NO];
-        
-        if(interceptedURL == nil ||
-           actualURLComponents == nil) {
-            [loadingRequest finishLoading];
-            return NO;
-        }
-
-        
-        actualURLComponents.scheme = [[NSURLComponents alloc] initWithURL:_originalURL resolvingAgainstBaseURL:NO].scheme;
-        NSURLRequest *request = [NSURLRequest requestWithURL:[actualURLComponents URL]];
-        
+        NSLog(@"create new session");
         self.songData = [NSMutableData data];
-        
-        self.session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration]
-                                                     delegate:self
-                                                delegateQueue:[NSOperationQueue mainQueue]];
-        
-        [[self.session dataTaskWithRequest:request] resume];
+    } else {
+        NSLog(@"session invalidate!");
+        [self.session invalidateAndCancel];
     }
     
+    NSURL *interceptedURL = [loadingRequest.request URL];
+    NSURLComponents *actualURLComponents = [[NSURLComponents alloc] initWithURL:interceptedURL resolvingAgainstBaseURL:NO];
+    
+    if(interceptedURL == nil ||
+       actualURLComponents == nil) {
+        [loadingRequest finishLoading];
+        return NO;
+    }
+    
+    
+    actualURLComponents.scheme = [[NSURLComponents alloc] initWithURL:_originalURL resolvingAgainstBaseURL:NO].scheme;
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[actualURLComponents URL]];
+    
+    if(loadingRequest.dataRequest.requestedOffset != 0) {
+        [request setValue:[NSString stringWithFormat:@"bytes=%llu-", loadingRequest.dataRequest.requestedOffset] forHTTPHeaderField:@"Range"];
+    }
+    
+    
+    
+    self.session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration]
+                                                 delegate:self
+                                            delegateQueue:[NSOperationQueue mainQueue]];
+    
+    [[self.session dataTaskWithRequest:request] resume];
     [self.pendingRequests addObject:loadingRequest];
     
     return YES;
@@ -170,13 +180,12 @@ static void *playerContext = &playerContext;
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveResponse:(NSURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition))completionHandler {
     completionHandler(NSURLSessionResponseAllow);
     NSLog(@"didReceiveResponse >>> %@",response);
-
+    
     self.response = (NSHTTPURLResponse *)response;
 }
 
 - (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data {
-    NSLog(@"didReceiveData data = %lu, total = %lu",(unsigned long)[data length],(unsigned long)[self.songData length]);
-    
+        NSLog(@"didReceiveData data = %lu, total = %lu",(unsigned long)[data length],(unsigned long)[self.songData length]);
     [self.songData appendData:data];
     float width = ((float)(self.songData.length + data.length) / (float)self.response.expectedContentLength) * self.view.frame.size.width;
     [self.progressVIew setFrame:CGRectMake(0, 100, width, 10)];
@@ -236,13 +245,14 @@ didCompleteWithError:(nullable NSError *)error {
     [self.pendingRequests removeObjectsInArray:requestsCompleted];
 }
 
+
 - (void)fillInContentInformation:(AVAssetResourceLoadingContentInformationRequest *)contentInformationRequest {
     if (contentInformationRequest == nil || self.response == nil) {
         return;
     }
     
-//    NSString *mimeType = [self.response MIMEType];
-//    CFStringRef contentType = UTTypeCreatePreferredIdentifierForTag(kUTTagClassMIMEType, (__bridge CFStringRef)(mimeType), NULL);
+    //    NSString *mimeType = [self.response MIMEType];
+    //    CFStringRef contentType = UTTypeCreatePreferredIdentifierForTag(kUTTagClassMIMEType, (__bridge CFStringRef)(mimeType), NULL);
     contentInformationRequest.byteRangeAccessSupported = YES;
     //제대로 contentType 받도록 수정.
     contentInformationRequest.contentType = @"mp3";
