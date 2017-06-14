@@ -34,14 +34,18 @@ static void *playerContext = &playerContext;
 #pragma mark - event handlers
 - (void)viewDidLoad {
     [super viewDidLoad];
-    
-    //http://cdn.mos.musicradar.com/audio/samples/abstract-demo-loops/LFC130-02.mp3
-    //http://www.nimh.nih.gov/audio/neurogenesis.mp3
-    //http://www.goclassic.co.kr/mp3/Beethoven_Appasionata_II_&_III.mp3 //교향곡
-    _originalURL = [NSURL URLWithString:@"http://www.nimh.nih.gov/audio/neurogenesis.mp3"];
-    AVURLAsset *urlAsset = [AVURLAsset assetWithURL:[self URL:_originalURL withCutsomscheme:@"howard"]];
-    
-    [urlAsset.resourceLoader setDelegate:self queue:dispatch_get_main_queue()];
+    AVURLAsset *urlAsset;
+    if ([[NSFileManager defaultManager] fileExistsAtPath:[self cacheFilePath]] == YES) {
+        urlAsset = [AVURLAsset assetWithURL:[NSURL fileURLWithPath:[self cacheFilePath]]];
+    } else {
+        //http://cdn.mos.musicradar.com/audio/samples/abstract-demo-loops/LFC130-02.mp3
+        //http://www.nimh.nih.gov/audio/neurogenesis.mp3
+        //http://www.goclassic.co.kr/mp3/Beethoven_Appasionata_II_&_III.mp3 //교향곡
+        _originalURL = [NSURL URLWithString:@"http://www.nimh.nih.gov/audio/neurogenesis.mp3"];
+        urlAsset = [AVURLAsset assetWithURL:[self URL:_originalURL withCutsomscheme:@"howard"]];
+        [urlAsset.resourceLoader setDelegate:self queue:dispatch_get_main_queue()];
+    }
+
     
     self.pendingRequests = [NSMutableArray new];
     self.currentPlayerItem = [AVPlayerItem playerItemWithAsset:urlAsset];
@@ -319,10 +323,14 @@ didCompleteWithError:(nullable NSError *)error {
 }
 
 - (void)clearCache {
-    NSString *cachedFilePath = [NSTemporaryDirectory() stringByAppendingString:@"test.mp3"];
+    NSString *cachedFilePath = [self cacheFilePath];
     if ([[NSFileManager defaultManager] fileExistsAtPath:cachedFilePath] == YES) {
         [[NSFileManager defaultManager] removeItemAtPath:cachedFilePath error:nil];
     }
+}
+
+- (NSString *)cacheFilePath {
+    return [NSTemporaryDirectory() stringByAppendingString:@"test.mp3"];
 }
 
 @end
