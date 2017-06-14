@@ -214,8 +214,43 @@ didCompleteWithError:(nullable NSError *)error {
         
         [self processPendingRequests];
         
+        [self clearCache];
         NSString *cachedFilePath = [NSTemporaryDirectory() stringByAppendingString:@"test.mp3"];
         [self.songData writeToFile:cachedFilePath atomically:YES];
+        
+//        NSString *exportedFilePath = [NSTemporaryDirectory() stringByAppendingString:@"exported.m4a"];
+//        
+//        if ([[NSFileManager defaultManager] fileExistsAtPath:exportedFilePath] == YES) {
+//            [[NSFileManager defaultManager] removeItemAtPath:exportedFilePath error:nil];
+//        }
+//        
+//        AVAssetExportSession *exportSession = [[AVAssetExportSession alloc] initWithAsset:self.player.currentItem.asset presetName:AVAssetExportPresetHighestQuality];
+//        NSArray<NSString *> *supportedFileTypes = [exportSession supportedFileTypes];
+//        exportSession.metadata = self.player.currentItem.asset.metadata;
+//        exportSession.outputFileType = supportedFileTypes[0];
+//        exportSession.outputURL = [NSURL fileURLWithPath:exportedFilePath];
+//        [exportSession exportAsynchronouslyWithCompletionHandler:^{
+//            switch(exportSession.status){
+//                case AVAssetExportSessionStatusExporting:
+//                    NSLog(@"Exporting...");
+//                    break;
+//                case AVAssetExportSessionStatusCompleted:
+//                    NSLog(@"Export completed, wohooo!!");
+//                    break;
+//                case AVAssetExportSessionStatusWaiting:
+//                    NSLog(@"Waiting...");
+//                    break;
+//                case AVAssetExportSessionStatusFailed:
+//                    NSLog(@"Failed with error: %@", exportSession.error);
+//                    break;
+//                case AVAssetExportSessionStatusUnknown:
+//                    NSLog(@"UnKnown...");
+//                    break;
+//                case AVAssetExportSessionStatusCancelled:
+//                    NSLog(@"Cancelled...");
+//                    break;
+//            }
+//        }];
     }
 }
 
